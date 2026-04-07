@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FluxChat</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <div class="background-layer"></div>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>FluxChat</h1>
+          <p class="subtitle">Browser GUI for your Python socket chat server.</p>
+        </div>
+        <div class="status-panel">
+          <span id="statusChip" class="status-chip offline">Offline</span>
+          <p id="hintText">Connect to the server to start chatting.</p>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="sidebar card">
+          <div class="card-block">
+            <h2>Connection</h2>
+            <label>
+              Host
+              <input id="hostInput" type="text" placeholder="127.0.0.1" />
+            </label>
+            <label>
+              Port
+              <input id="portInput" type="number" min="1" max="65535" placeholder="5050" />
+            </label>
+            <label>
+              Username
+              <input id="usernameInput" type="text" placeholder="alice" />
+            </label>
+            <div class="row gap">
+              <button id="connectBtn" class="btn primary">Connect</button>
+              <button id="disconnectBtn" class="btn secondary" disabled>Disconnect</button>
+            </div>
+          </div>
+
+          <div class="card-block">
+            <h2>Online Users</h2>
+            <ul id="userList" class="user-list"></ul>
+            <p class="small">Tip: click a user to select private recipient.</p>
+          </div>
+        </aside>
+
+        <section class="main card">
+          <div class="chat-header">
+            <h2>Conversation</h2>
+            <div class="row actions">
+              <button id="helpBtn" class="btn ghost">Help</button>
+              <button id="rosterBtn" class="btn ghost">Refresh roster</button>
+              <button id="clearBtn" class="btn ghost">Clear chat</button>
+            </div>
+          </div>
+
+          <div id="chatFeed" class="chat-feed"></div>
+
+          <div class="composer">
+            <label>
+              Recipient
+              <select id="recipientSelect">
+                <option>Everyone</option>
+              </select>
+            </label>
+            <label class="grow">
+              Message
+              <input id="messageInput" type="text" placeholder="Type a message or command" />
+            </label>
+            <button id="sendBtn" class="btn primary" disabled>Send to room</button>
+          </div>
+          <p class="small">
+            Commands: <strong>/help</strong>, <strong>/list</strong>,
+            <strong>/msg &lt;user&gt; &lt;text&gt;</strong>, <strong>/quit</strong>
+          </p>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast hidden"></div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
