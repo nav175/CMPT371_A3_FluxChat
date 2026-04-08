@@ -61,6 +61,18 @@ pip install -r requirements.txt
 python3 server.py --host 0.0.0.0 --port 5050
 ```
 
+Optional server dashboard (safe to skip):
+
+```bash
+python3 server.py --host 0.0.0.0 --port 5050 --dashboard --dashboard-host 127.0.0.1 --dashboard-port 5051
+```
+
+If dashboard mode is used, open:
+
+```text
+http://127.0.0.1:5051
+```
+
 Expected output includes:
 
 ```text
