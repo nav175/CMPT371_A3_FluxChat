@@ -55,6 +55,7 @@ class ChatSession:
                 return False, "Already connected. Disconnect first."
 
         try:
+            # Complete a join handshake before exposing the session to the UI.
             sock = socket.create_connection((host, port), timeout=5)
             sock_file = sock.makefile("r", encoding="utf-8", newline="\n")
             sock.settimeout(5)
@@ -94,6 +95,7 @@ class ChatSession:
                 text=f"Connected to {host}:{port} as {username}.",
             )
 
+        # Apply the server's first response immediately so the UI state is accurate.
         self._handle_message(first_message)
         self._receiver_thread = threading.Thread(target=self._receive_loop, daemon=True)
         self._receiver_thread.start()
@@ -205,6 +207,7 @@ class ChatSession:
                 return
 
             try:
+                # The socket file blocks until one complete newline-delimited message arrives.
                 raw_line = socket_file.readline()
             except OSError:
                 self._finalize_disconnect("Connection to server was interrupted.")
@@ -273,6 +276,7 @@ class ChatSession:
         self._events.append(event)
 
         if len(self._events) > 700:
+            # Keep memory usage bounded while preserving recent chat context.
             self._events = self._events[-500:]
 
     def _finalize_disconnect(self, reason: str) -> None:
@@ -280,6 +284,7 @@ class ChatSession:
             if not self._connected and self._socket is None and self._socket_file is None:
                 return
 
+            # Snapshot references, then clear shared state before closing descriptors.
             sock = self._socket
             sock_file = self._socket_file
             self._socket = None

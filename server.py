@@ -58,6 +58,7 @@ class ChatServer:
                 except OSError:
                     break
 
+                # Handle each client in its own thread so the accept loop stays responsive.
                 threading.Thread(
                     target=self._handle_client,
                     args=(client_sock, address),
@@ -70,6 +71,8 @@ class ChatServer:
         username = ""
         try:
             client_file = client_sock.makefile("r", encoding="utf-8", newline="\n")
+
+            # Require a join packet first so the server can register identity safely.
             join_raw = client_file.readline()
             if not join_raw:
                 return
@@ -189,6 +192,7 @@ class ChatServer:
 
     def _broadcast(self, payload: dict[str, object], exclude: str | None = None) -> None:
         with self._lock:
+            # Copy sessions first to avoid holding the lock during socket writes.
             sessions = list(self._clients.values())
 
         for session in sessions:
