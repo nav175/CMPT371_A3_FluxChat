@@ -35,159 +35,359 @@ DASHBOARD_HTML = """<!doctype html>
     <title>FluxChat Server Dashboard</title>
     <style>
         :root {
-            color-scheme: light;
-            --bg: #f5f7fb;
-            --panel: #ffffff;
-            --text: #13213a;
-            --muted: #55637e;
-            --accent: #1e88e5;
-            --good: #157347;
-            --shadow: 0 12px 28px rgba(12, 28, 62, 0.08);
+            --bg: #0b1324;
+            --panel: #101a33;
+            --panel-soft: #162447;
+            --surface: #0f1b38;
+            --text: #e6edf8;
+            --muted: #9cafcc;
+            --accent: #55c7ff;
+            --accent-2: #57f2d3;
+            --warn: #ffd166;
+            --error: #ff7b8a;
+            --ok: #73f0b5;
         }
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Avenir Next", "Futura", "Trebuchet MS", sans-serif;
         }
         body {
-            background: linear-gradient(180deg, #f4f9ff 0%, #eef3fb 100%);
+            background: var(--bg);
             color: var(--text);
             min-height: 100vh;
-            padding: 18px;
         }
+
+        .background-layer {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(87, 242, 211, 0.2), transparent 30%),
+                radial-gradient(circle at 80% 10%, rgba(85, 199, 255, 0.2), transparent 35%),
+                radial-gradient(circle at 70% 70%, rgba(255, 122, 138, 0.12), transparent 30%),
+                linear-gradient(135deg, #0a1020 0%, #0b1324 45%, #0d1a32 100%);
+            z-index: 0;
+        }
+
         main {
-            max-width: 1050px;
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 22px;
         }
+
+        .topbar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+
         h1 {
-            font-size: clamp(1.4rem, 2.4vw, 2rem);
-            margin-bottom: 8px;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
         }
+
         .subtitle {
             color: var(--muted);
-            margin-bottom: 14px;
+            margin: 0;
         }
+
+        .status-panel {
+            text-align: right;
+        }
+
+        .status-chip {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .status-chip.offline {
+            background: rgba(255, 123, 138, 0.16);
+            color: #ffd2d8;
+        }
+
+        .status-chip.connecting {
+            background: rgba(255, 209, 102, 0.16);
+            color: #ffe8a8;
+        }
+
+        .status-chip.online {
+            background: rgba(115, 240, 181, 0.14);
+            color: #cbffe8;
+        }
+
+        #hintText {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.4;
+            max-width: 480px;
+        }
+
         .cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 12px;
-            margin-bottom: 12px;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 16px;
         }
+
         .card {
-            background: var(--panel);
-            border-radius: 14px;
-            box-shadow: var(--shadow);
-            padding: 14px;
-            border: 1px solid #e3ebf7;
+            border-radius: 22px;
+            background: linear-gradient(165deg, rgba(16, 26, 51, 0.95), rgba(11, 19, 36, 0.95));
+            border: 1px solid rgba(125, 174, 255, 0.18);
+            box-shadow: 0 18px 50px rgba(4, 10, 22, 0.45);
+            padding: 16px;
         }
+
+        .span-4 {
+            grid-column: span 4;
+        }
+
+        .span-6 {
+            grid-column: span 6;
+        }
+
+        .span-8 {
+            grid-column: span 8;
+        }
+
+        .span-12 {
+            grid-column: span 12;
+        }
+
         .card h2 {
-            font-size: 0.95rem;
+            font-size: 1rem;
             margin-bottom: 10px;
             color: var(--muted);
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.08em;
         }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .metric-box {
+            background: linear-gradient(170deg, rgba(22, 36, 71, 0.9), rgba(17, 30, 59, 0.9));
+            border: 1px solid rgba(120, 163, 240, 0.16);
+            border-radius: 14px;
+            padding: 10px;
+        }
+
+        .metric-label {
+            color: var(--muted);
+            font-size: 0.83rem;
+            margin-bottom: 6px;
+        }
+
         .metric {
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: var(--accent);
             line-height: 1.1;
-            margin-bottom: 8px;
+            font-variant-numeric: tabular-nums;
         }
+
+        .metric.ok {
+            color: var(--ok);
+        }
+
+        .metric.warn {
+            color: var(--warn);
+        }
+
+        .metric.error {
+            color: var(--error);
+        }
+
         ul {
             list-style: none;
             margin-top: 6px;
-            max-height: 210px;
+            max-height: 260px;
             overflow: auto;
-            border-radius: 8px;
-            border: 1px solid #ebf0f8;
+            border-radius: 12px;
+            border: 1px solid rgba(125, 174, 255, 0.2);
+            background: rgba(7, 15, 29, 0.7);
         }
+
         li {
-            padding: 8px 10px;
-            border-bottom: 1px solid #edf2fa;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(146, 194, 255, 0.1);
             font-size: 0.92rem;
         }
+
         li:last-child {
             border-bottom: 0;
         }
+
+        li.empty {
+            color: var(--muted);
+            font-style: italic;
+        }
+
         .row {
             display: flex;
             justify-content: space-between;
             gap: 8px;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
             color: var(--muted);
             font-size: 0.93rem;
         }
+
+        .session-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .session-name {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .session-addr {
+            font-size: 0.82rem;
+            color: var(--muted);
+            font-variant-numeric: tabular-nums;
+        }
+
         .event-time {
-            color: #4e648b;
+            color: var(--muted);
             margin-right: 8px;
             font-variant-numeric: tabular-nums;
         }
+
         .event-kind {
-            color: var(--good);
-            font-weight: 600;
+            font-weight: 700;
             margin-right: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 10px;
-            background: #e8f5e9;
-            border: 1px solid #c7e7cf;
-            border-radius: 999px;
-            font-size: 0.86rem;
-            color: #1f5a38;
-            margin-bottom: 12px;
+
+        .kind-system {
+            color: var(--accent);
         }
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #2e7d32;
-            animation: pulse 1.5s infinite;
+
+        .kind-chat {
+            color: var(--ok);
         }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0.45; }
+
+        .kind-private {
+            color: #d9b3ff;
+        }
+
+        .kind-join,
+        .kind-leave {
+            color: var(--warn);
+        }
+
+        .kind-error {
+            color: var(--error);
+        }
+
+        .event-text {
+            color: var(--text);
+        }
+
+        .endpoint {
+            font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+            font-weight: 600;
+            color: #d3e8ff;
+        }
+
+        @media (max-width: 1050px) {
+            .span-4,
+            .span-6,
+            .span-8 {
+                grid-column: span 12;
+            }
+
+            .status-panel {
+                text-align: left;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="background-layer"></div>
     <main>
-        <h1>FluxChat Server Dashboard</h1>
-        <p class="subtitle">Live operational view for the TCP chat server.</p>
-        <div class="status"><span class="dot"></span><span id="statusText">Running</span></div>
+        <header class="topbar">
+            <div>
+                <h1>FluxChat Server Dashboard</h1>
+                <p class="subtitle">Live operational monitoring for the TCP chat server.</p>
+            </div>
+            <div class="status-panel">
+                <span id="statusChip" class="status-chip connecting">Loading...</span>
+                <p id="hintText">Waiting for dashboard metrics...</p>
+            </div>
+        </header>
 
         <div class="cards">
-            <section class="card">
-                <h2>Connections</h2>
-                <div class="metric" id="activeUserCount">0</div>
-                <div class="row"><span>Active users</span><span id="activeUsersLabel">none</span></div>
-                <div class="row"><span>Total connections</span><span id="totalConnections">0</span></div>
+            <section class="card span-8">
+                <h2>Live Metrics</h2>
+                <div class="metrics">
+                    <div class="metric-box">
+                        <div class="metric-label">Active users</div>
+                        <div class="metric ok" id="activeUserCount">0</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Total connections</div>
+                        <div class="metric" id="totalConnections">0</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Total messages</div>
+                        <div class="metric" id="totalMessages">0</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Uptime</div>
+                        <div class="metric" id="uptime">0s</div>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 12px;"><span>Active usernames</span><span id="activeUsersLabel">none</span></div>
             </section>
 
-            <section class="card">
+            <section class="card span-4">
                 <h2>Traffic</h2>
                 <div class="row"><span>Public messages</span><span id="publicMessages">0</span></div>
                 <div class="row"><span>Private messages</span><span id="privateMessages">0</span></div>
-                <div class="row"><span>Uptime</span><span id="uptime">0s</span></div>
+                <div class="row"><span>Messages/min</span><span id="messageRate">0.00</span></div>
+                <div class="row"><span>Disconnect events</span><span id="disconnectCount">0</span></div>
+                <div class="row"><span>Error events</span><span id="errorCount">0</span></div>
             </section>
 
-            <section class="card">
-                <h2>Socket Server</h2>
-                <div class="row"><span>Host</span><span id="serverHost">-</span></div>
-                <div class="row"><span>Port</span><span id="serverPort">-</span></div>
-                <h2 style="margin-top: 12px;">Online Users</h2>
-                <ul id="users"></ul>
+            <section class="card span-4">
+                <h2>Endpoints</h2>
+                <div class="row"><span>Socket server</span><span class="endpoint" id="serverEndpoint">-</span></div>
+                <div class="row"><span>Dashboard</span><span class="endpoint" id="dashboardEndpoint">-</span></div>
+                <div class="row"><span>Last updated</span><span id="lastUpdated">-</span></div>
+            </section>
+
+            <section class="card span-8">
+                <h2>Active Sessions</h2>
+                <ul id="sessions"></ul>
+            </section>
+
+            <section class="card span-12">
+                <h2>Recent Events</h2>
+                <ul id="events"></ul>
             </section>
         </div>
-
-        <section class="card">
-            <h2>Recent Events</h2>
-            <ul id="events"></ul>
-        </section>
     </main>
 
     <script>
@@ -205,65 +405,111 @@ DASHBOARD_HTML = """<!doctype html>
             return s + "s";
         }
 
-        function escapeHtml(text) {
-            return String(text)
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll('"', "&quot;")
-                .replaceAll("'", "&#39;");
+        function escapeHtml(value) {
+            var text = String(value === undefined || value === null ? "" : value);
+            return text.replace(/[&<>"']/g, function (char) {
+                if (char === "&") return "&amp;";
+                if (char === "<") return "&lt;";
+                if (char === ">") return "&gt;";
+                if (char === '"') return "&quot;";
+                return "&#39;";
+            });
         }
 
-        function renderUsers(users) {
-            var usersEl = document.getElementById("users");
-            if (!Array.isArray(users) || users.length === 0) {
-                usersEl.innerHTML = "<li>No users connected</li>";
+        function setText(id, value) {
+            var element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+
+        function renderSessions(sessions) {
+            var sessionsEl = document.getElementById("sessions");
+            if (!Array.isArray(sessions) || sessions.length === 0) {
+                sessionsEl.innerHTML = "<li class='empty'>No users connected</li>";
                 return;
             }
-            usersEl.innerHTML = users.map(function (name) {
-                return "<li>" + escapeHtml(name) + "</li>";
+
+            sessionsEl.innerHTML = sessions.map(function (item) {
+                var name = escapeHtml(item.username || "unknown");
+                var addr = escapeHtml(item.address || "-");
+                return "<li><div class='session-row'><span class='session-name'>" + name + "</span><span class='session-addr'>" + addr + "</span></div></li>";
             }).join("");
         }
 
         function renderEvents(events) {
             var eventsEl = document.getElementById("events");
             if (!Array.isArray(events) || events.length === 0) {
-                eventsEl.innerHTML = "<li>No events yet</li>";
+                eventsEl.innerHTML = "<li class='empty'>No events yet</li>";
                 return;
             }
+
             eventsEl.innerHTML = events.map(function (item) {
                 var timestamp = escapeHtml(item.timestamp || "");
-                var kind = escapeHtml((item.kind || "info").toUpperCase());
+                var rawKind = String(item.kind || "info").toLowerCase();
+                var kind = escapeHtml(rawKind.toUpperCase());
                 var text = escapeHtml(item.text || "");
-                return "<li><span class=\"event-time\">" + timestamp + "</span><span class=\"event-kind\">" + kind + "</span><span>" + text + "</span></li>";
+                var kindClass = "kind-" + rawKind.replace(/[^a-z0-9_-]/g, "");
+                return "<li><span class='event-time'>" + timestamp + "</span><span class='event-kind " + kindClass + "'>" + kind + "</span><span class='event-text'>" + text + "</span></li>";
             }).join("");
+        }
+
+        function setStatus(isOnline, message) {
+            var chip = document.getElementById("statusChip");
+            var hint = document.getElementById("hintText");
+            if (!chip || !hint) {
+                return;
+            }
+
+            if (isOnline) {
+                chip.className = "status-chip online";
+                chip.textContent = "Live";
+                hint.textContent = message;
+            } else {
+                chip.className = "status-chip offline";
+                chip.textContent = "Offline";
+                hint.textContent = message;
+            }
         }
 
         async function refreshDashboard() {
             try {
-                var response = await fetch("/api/status", { cache: "no-store" });
+                var response = await fetch("/api/status?ts=" + Date.now(), { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error("status request failed");
                 }
 
                 var data = await response.json();
-                document.getElementById("activeUserCount").textContent = data.activeUserCount;
-                document.getElementById("activeUsersLabel").textContent = data.activeUserCount === 0 ? "none" : data.activeUsers.join(", ");
-                document.getElementById("totalConnections").textContent = data.totalConnections;
-                document.getElementById("publicMessages").textContent = data.publicMessages;
-                document.getElementById("privateMessages").textContent = data.privateMessages;
-                document.getElementById("uptime").textContent = formatUptime(data.uptimeSeconds);
-                document.getElementById("serverHost").textContent = data.serverHost;
-                document.getElementById("serverPort").textContent = data.serverPort;
-                renderUsers(data.activeUsers);
-                renderEvents(data.recentEvents);
+                setText("activeUserCount", data.activeUserCount || 0);
+                setText("activeUsersLabel", (Array.isArray(data.activeUsers) && data.activeUsers.length > 0) ? data.activeUsers.join(", ") : "none");
+                setText("totalConnections", data.totalConnections || 0);
+                setText("publicMessages", data.publicMessages || 0);
+                setText("privateMessages", data.privateMessages || 0);
+                setText("totalMessages", data.totalMessages || 0);
+                setText("disconnectCount", data.disconnectCount || 0);
+                setText("errorCount", data.errorCount || 0);
+                setText("messageRate", Number(data.messagesPerMinute || 0).toFixed(2));
+                setText("uptime", formatUptime(data.uptimeSeconds || 0));
+                setText("serverEndpoint", String(data.serverHost || "-") + ":" + String(data.serverPort || "-"));
+                if (data.dashboardHost && data.dashboardPort) {
+                    setText("dashboardEndpoint", String(data.dashboardHost) + ":" + String(data.dashboardPort));
+                } else {
+                    setText("dashboardEndpoint", "disabled");
+                }
+                setText("lastUpdated", new Date().toLocaleTimeString());
+
+                renderSessions(data.activeSessions || []);
+                renderEvents(data.recentEvents || []);
+                setStatus(true, "Live updates every 1 second. Last refresh " + new Date().toLocaleTimeString() + ".");
             } catch (error) {
-                document.getElementById("statusText").textContent = "Dashboard temporarily unavailable";
+                setStatus(false, "Dashboard temporarily unavailable. Check server process and refresh.");
             }
         }
 
-        refreshDashboard();
-        setInterval(refreshDashboard, 1000);
+        window.addEventListener("load", function () {
+            refreshDashboard();
+            setInterval(refreshDashboard, 1000);
+        });
     </script>
 </body>
 </html>
@@ -288,9 +534,13 @@ class ChatServer:
         self._running = False
         self._started_at = time.time()
         self._total_connections = 0
+        self._disconnect_count = 0
+        self._error_count = 0
         self._public_messages = 0
         self._private_messages = 0
         self._recent_events: list[dict[str, str]] = []
+        self._dashboard_host = ""
+        self._dashboard_port = 0
 
     def start(self) -> None:
         """Start the TCP server and accept clients forever."""
@@ -451,7 +701,9 @@ class ChatServer:
             self._remove_client(username)
 
     def _send_error(self, username: str, text: str) -> None:
-        self._record_event("error", f"Error for {username}: {text}")
+        with self._lock:
+            self._error_count += 1
+            self._record_event_locked("error", f"Error for {username}: {text}")
         self._send_to_user(username, {"type": "error", "message": text})
 
     def _broadcast(self, payload: dict[str, object], exclude: str | None = None) -> None:
@@ -485,6 +737,8 @@ class ChatServer:
                 pass
 
         if removed:
+            with self._lock:
+                self._disconnect_count += 1
             self._record_event("leave", f"{username} disconnected")
             self._broadcast_system(f"{username} left the room.")
             self._broadcast_roster()
@@ -507,15 +761,38 @@ class ChatServer:
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             active_users = sorted(self._clients)
+            active_sessions = [
+                {
+                    "username": session.username,
+                    "address": f"{session.address[0]}:{session.address[1]}",
+                }
+                for session in sorted(self._clients.values(), key=lambda item: item.username.lower())
+            ]
+            uptime_seconds = int(max(0.0, time.time() - self._started_at))
+            total_messages = self._public_messages + self._private_messages
+            if uptime_seconds > 0:
+                messages_per_minute = round(total_messages / (uptime_seconds / 60.0), 2)
+            else:
+                messages_per_minute = 0.0
+
             return {
+                "running": self._running,
                 "serverHost": self.host,
                 "serverPort": self.port,
+                "dashboardHost": self._dashboard_host,
+                "dashboardPort": self._dashboard_port,
                 "activeUsers": active_users,
+                "activeSessions": active_sessions,
                 "activeUserCount": len(active_users),
                 "totalConnections": self._total_connections,
+                "disconnectCount": self._disconnect_count,
+                "errorCount": self._error_count,
                 "publicMessages": self._public_messages,
                 "privateMessages": self._private_messages,
-                "uptimeSeconds": int(time.time() - self._started_at),
+                "totalMessages": total_messages,
+                "messagesPerMinute": messages_per_minute,
+                "uptimeSeconds": uptime_seconds,
+                "startedAt": datetime.fromtimestamp(self._started_at).strftime("%Y-%m-%d %H:%M:%S"),
                 "recentEvents": list(self._recent_events),
             }
 
@@ -527,6 +804,10 @@ class ChatServer:
         except ImportError:
             print("Dashboard disabled: Flask is not available in this environment.")
             return
+
+        with self._lock:
+            self._dashboard_host = host
+            self._dashboard_port = port
 
         app = Flask(__name__, static_folder=None)
 

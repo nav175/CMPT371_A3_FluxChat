@@ -2,6 +2,8 @@ const state = {
   connected: false,
   lastEventId: 0,
   users: [],
+  usersSignature: "",
+  recipient: "Everyone",
 };
 
 const els = {
@@ -76,53 +78,89 @@ function setStatus(kind, hint) {
   }
 }
 
-function updateUsers(users) {
-  state.users = users;
-  const currentRecipient = els.recipientSelect.value || "Everyone";
+function buildUsersSignature(users) {
+  return users.join("\u0001");
+}
 
-  els.userList.innerHTML = "";
+function renderUserList(users) {
+  const fragment = document.createDocumentFragment();
   for (const user of users) {
     const li = document.createElement("li");
     li.textContent = user;
-    li.addEventListener("click", () => {
-      els.recipientSelect.value = user;
-      updateSendLabel();
-      highlightSelectedUser();
-      els.messageInput.focus();
-    });
-    els.userList.appendChild(li);
+    li.dataset.user = user;
+    li.tabIndex = 0;
+    li.setAttribute("role", "button");
+    li.setAttribute("aria-label", `Select ${user} as recipient`);
+    fragment.appendChild(li);
   }
+  els.userList.replaceChildren(fragment);
+}
 
-  els.recipientSelect.innerHTML = "";
+function renderRecipientOptions(users) {
+  const fragment = document.createDocumentFragment();
+
   const everyoneOption = document.createElement("option");
+  everyoneOption.value = "Everyone";
   everyoneOption.textContent = "Everyone";
-  els.recipientSelect.appendChild(everyoneOption);
+  fragment.appendChild(everyoneOption);
 
   for (const user of users) {
     const option = document.createElement("option");
+    option.value = user;
     option.textContent = user;
-    els.recipientSelect.appendChild(option);
+    fragment.appendChild(option);
   }
 
-  if (users.includes(currentRecipient) || currentRecipient === "Everyone") {
-    els.recipientSelect.value = currentRecipient;
-  } else {
-    els.recipientSelect.value = "Everyone";
+  els.recipientSelect.replaceChildren(fragment);
+}
+
+function selectRecipient(recipient, focusMessage = false) {
+  const normalized = recipient && recipient !== "Everyone" ? recipient : "Everyone";
+  state.recipient = normalized;
+
+  if (![...els.recipientSelect.options].some((option) => option.value === state.recipient)) {
+    state.recipient = "Everyone";
   }
 
-  highlightSelectedUser();
+  els.recipientSelect.value = state.recipient;
   updateSendLabel();
+  highlightSelectedUser();
+
+  if (focusMessage) {
+    els.messageInput.focus();
+  }
+}
+
+function updateUsers(users) {
+  const normalizedUsers = Array.isArray(users)
+    ? users.map((user) => String(user).trim()).filter((user) => user.length > 0)
+    : [];
+
+  state.users = normalizedUsers;
+  const signature = buildUsersSignature(normalizedUsers);
+
+  if (state.recipient !== "Everyone" && !normalizedUsers.includes(state.recipient)) {
+    state.recipient = "Everyone";
+  }
+
+  if (signature !== state.usersSignature) {
+    renderUserList(normalizedUsers);
+    renderRecipientOptions(normalizedUsers);
+    state.usersSignature = signature;
+  }
+
+  selectRecipient(state.recipient, false);
 }
 
 function highlightSelectedUser() {
-  const selected = els.recipientSelect.value;
+  const selected = state.recipient;
   for (const li of els.userList.children) {
-    li.classList.toggle("selected", li.textContent === selected);
+    li.classList.toggle("selected", li.dataset.user === selected);
   }
 }
 
 function updateSendLabel() {
-  const selected = els.recipientSelect.value;
+  const selected = state.recipient;
   els.sendBtn.textContent = selected && selected !== "Everyone" ? `Private to ${selected}` : "Send to room";
 }
 
@@ -270,7 +308,7 @@ async function disconnect() {
 
 async function sendMessage() {
   const text = els.messageInput.value.trim();
-  const recipient = els.recipientSelect.value || "Everyone";
+  const recipient = state.recipient || "Everyone";
 
   if (!text) {
     return;
@@ -310,8 +348,29 @@ function wireEvents() {
   els.helpBtn.addEventListener("click", showHelp);
   els.clearBtn.addEventListener("click", clearChat);
   els.recipientSelect.addEventListener("change", () => {
-    updateSendLabel();
-    highlightSelectedUser();
+    selectRecipient(els.recipientSelect.value, false);
+  });
+
+  els.userList.addEventListener("click", (event) => {
+    const userItem = event.target.closest("li[data-user]");
+    if (!userItem) {
+      return;
+    }
+    selectRecipient(userItem.dataset.user || "Everyone", true);
+  });
+
+  els.userList.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    const userItem = event.target.closest("li[data-user]");
+    if (!userItem) {
+      return;
+    }
+
+    event.preventDefault();
+    selectRecipient(userItem.dataset.user || "Everyone", true);
   });
 
   els.messageInput.addEventListener("keydown", (event) => {
