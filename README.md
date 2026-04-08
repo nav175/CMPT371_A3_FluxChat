@@ -31,9 +31,7 @@ The client is a browser-based GUI served by Flask. It provides a responsive chat
 
 ## 3. Video Demo (Maximum 2 Minutes)
 
-- Video demo link (replace placeholder before submission): https://<add-video-link-here>
-- Keep the video at or below 120 seconds.
-- Demonstrate: connection setup, data exchange (public + private), and clean termination.
+- Video demo link: <https://1sfu-my.sharepoint.com/:v:/g/personal/nsn8_sfu_ca/IQAJNNSMs52rT4s9vQ0iFS_8AQNLZ3amanGvhycHLiw3q94?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=W8ixcb>
 
 ## 4. Prerequisites (Fresh Environment)
 
